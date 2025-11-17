@@ -1,0 +1,274 @@
+{
+  "version": "1.0",
+  "rules": [
+    {
+      "id": "T1",
+      "category": "transparency",
+      "title": "Privacy policy link present",
+      "description": "Detects whether a privacy/gizlilik policy link exists on the page.",
+      "method": "Scan all <a> elements for text or href containing keywords like 'privacy', 'privacy policy', 'gizlilik', 'gizlilik politikası', 'kvkk', 'aydınlatma', 'data protection'.",
+      "weight": 15,
+      "legal_refs": ["GDPR Art.12-14", "KVKK Art.10"]
+    },
+    {
+      "id": "T2",
+      "category": "transparency",
+      "title": "Privacy policy link visibility",
+      "description": "Checks whether the privacy policy link is easily accessible (e.g. in footer).",
+      "method": "Prefer links located in <footer> or near the bottom of the page; if only found in uncommon places, mark as hard to find.",
+      "weight": 5,
+      "legal_refs": ["GDPR Art.12-14", "KVKK Art.10"]
+    },
+    {
+      "id": "T3",
+      "category": "transparency",
+      "title": "Privacy policy content length",
+      "description": "Heuristically checks if the privacy policy page has non-trivial text content.",
+      "method": "Fetch the policy URL (if same-origin) and check that visible text length exceeds a minimum threshold (e.g. 500 characters).",
+      "weight": 5,
+      "legal_refs": ["GDPR Art.12-14", "KVKK Art.10"]
+    },
+
+    {
+      "id": "C1",
+      "category": "consent",
+      "title": "Cookie/consent banner present",
+      "description": "Detects whether a cookie or consent banner is shown to the user.",
+      "method": "Search DOM for visible overlays/modals whose id/class/text contains 'cookie', 'cookies', 'consent', 'gdpr', 'kvkk', 'privacy', 'banner', 'modal'.",
+      "weight": 15,
+      "legal_refs": ["GDPR Art.6-7", "KVKK Art.5"]
+    },
+    {
+      "id": "C2",
+      "category": "consent",
+      "title": "Granular consent options",
+      "description": "Checks if the banner offers more than a single 'accept all' option.",
+      "method": "Inside the banner, look for buttons/links with reject or settings keywords (e.g. 'reject', 'reddet', 'only necessary', 'settings', 'preferences'). If only 'accept' exists, no granularity.",
+      "weight": 15,
+      "legal_refs": ["GDPR Art.7", "GDPR Recital 32"]
+    },
+    {
+      "id": "C3",
+      "category": "consent",
+      "title": "Pre-checked consent options",
+      "description": "Detects whether non-essential cookie categories are pre-checked.",
+      "method": "In the consent UI, check checkbox/toggle inputs under analytics/marketing categories for default checked state.",
+      "weight": 10,
+      "legal_refs": ["GDPR Art.7"]
+    },
+    {
+      "id": "C4",
+      "category": "consent",
+      "title": "Consent withdrawal / change mechanism",
+      "description": "Checks if users can later change or withdraw their cookie choices.",
+      "method": "Look for persistent links/buttons like 'cookie settings', 'change consent', 'çerez tercihleri', 'gizlilik ayarları' accessible after initial decision.",
+      "weight": 10,
+      "legal_refs": ["GDPR Art.7", "GDPR Art.12"]
+    },
+
+    {
+      "id": "K1",
+      "category": "cookies",
+      "title": "Cookie enumeration",
+      "description": "Collects all cookies set for the current domain for further classification.",
+      "method": "Use document.cookie and/or browser cookie APIs to list names, values, domains, paths, and expiration.",
+      "weight": 0,
+      "legal_refs": []
+    },
+    {
+      "id": "K2",
+      "category": "cookies",
+      "title": "Secure / HttpOnly / SameSite attributes",
+      "description": "Evaluates security attributes of cookies.",
+      "method": "For each cookie, check Secure flag, HttpOnly flag and SameSite value (Lax/Strict/None) via browser cookie APIs where possible.",
+      "weight": 10,
+      "legal_refs": ["GDPR Art.32", "KVKK Art.12"]
+    },
+    {
+      "id": "K3",
+      "category": "cookies",
+      "title": "Cookie lifetime",
+      "description": "Estimates how long cookies persist and flags very long-lived identifiers.",
+      "method": "Check cookie expiration; classify as session, <30 days, 30–365 days, or >=365 days. Long-lived cookies increase risk.",
+      "weight": 10,
+      "legal_refs": ["GDPR Art.5(1)(e)", "KVKK Art.7"]
+    },
+    {
+      "id": "K4",
+      "category": "cookies",
+      "title": "Likely cookie purpose",
+      "description": "Heuristically categorizes cookies as necessary, analytics, advertising or unknown.",
+      "method": "Map cookie names/domains to categories using patterns and a small local mapping table; examples: _ga for analytics, IDE for advertising.",
+      "weight": 5,
+      "legal_refs": ["GDPR Art.6", "GDPR Art.5", "KVKK Art.5"]
+    },
+
+    {
+      "id": "S1",
+      "category": "third_party",
+      "title": "Third-party script enumeration",
+      "description": "Lists all external scripts and selected resources loaded from other domains.",
+      "method": "Inspect <script src>, <img>, <iframe>, <link> and fetch/XHR endpoints; collect domains differing from the main site.",
+      "weight": 0,
+      "legal_refs": []
+    },
+    {
+      "id": "S2",
+      "category": "third_party",
+      "title": "Known tracker detection",
+      "description": "Detects common tracking and advertising providers.",
+      "method": "Compare external domains against a local tracker list JSON; count matches and store names.",
+      "weight": 20,
+      "legal_refs": ["GDPR Art.6-7", "GDPR Art.22", "GDPR Art.35", "KVKK Art.5"]
+    },
+    {
+      "id": "S3",
+      "category": "third_party",
+      "title": "Third-party domain categorization",
+      "description": "Classifies external domains by purpose (analytics, ads, social, CDN, unknown).",
+      "method": "Use a static mapping (domain → category) to help explain third-party usage and support scoring.",
+      "weight": 5,
+      "legal_refs": []
+    },
+
+    {
+      "id": "F1",
+      "category": "forms",
+      "title": "Form detection",
+      "description": "Detects presence of HTML forms that accept user input.",
+      "method": "Scan all <form> elements and associated input/textarea/select elements.",
+      "weight": 5,
+      "legal_refs": ["GDPR Art.5", "KVKK Art.4-5"]
+    },
+    {
+      "id": "F2",
+      "category": "forms",
+      "title": "PII fields detection",
+      "description": "Detects common personal data fields (email, name, phone, ID, address).",
+      "method": "Inspect name/id/placeholder/aria-label for patterns like 'email', 'name', 'ad', 'soyad', 'phone', 'tel', 'tc', 'address', 'adres'.",
+      "weight": 15,
+      "legal_refs": ["GDPR Art.4", "GDPR Art.6", "KVKK Art.3", "KVKK Art.5"]
+    },
+    {
+      "id": "F3",
+      "category": "forms",
+      "title": "Form action third-party endpoint",
+      "description": "Checks whether form submissions are sent to third-party domains.",
+      "method": "Compare form.action domain to current site domain; if different and not a subdomain, mark as third-party.",
+      "weight": 15,
+      "legal_refs": ["GDPR Art.44-49", "KVKK Art.8-9"]
+    },
+    {
+      "id": "F4",
+      "category": "forms",
+      "title": "Form HTTPS usage",
+      "description": "Verifies secure transmission for forms that collect personal data.",
+      "method": "If form.action starts with 'http://' or page is loaded over HTTP, flag insecure transmission.",
+      "weight": 15,
+      "legal_refs": ["GDPR Art.32", "KVKK Art.12"]
+    },
+
+    {
+      "id": "Sec1",
+      "category": "security",
+      "title": "Main page HTTPS",
+      "description": "Checks if the main page is loaded over HTTPS.",
+      "method": "Check window.location.protocol equals 'https:'.",
+      "weight": 15,
+      "legal_refs": ["GDPR Art.32", "KVKK Art.12"]
+    },
+    {
+      "id": "Sec2",
+      "category": "security",
+      "title": "Mixed content detection",
+      "description": "Detects insecure HTTP resources on an HTTPS page.",
+      "method": "On HTTPS pages, scan resource URLs (script/img/link/iframe) for 'http://' prefixes.",
+      "weight": 10,
+      "legal_refs": ["GDPR Art.32", "KVKK Art.12"]
+    },
+    {
+      "id": "Sec3",
+      "category": "security",
+      "title": "Basic security headers (optional)",
+      "description": "Checks for presence of certain security-related headers (CSP, HSTS, X-Frame-Options).",
+      "method": "If header information is available via background scripts or devtools APIs, check for Content-Security-Policy, Strict-Transport-Security, X-Frame-Options.",
+      "weight": 5,
+      "legal_refs": ["GDPR Art.32", "KVKK Art.12"]
+    },
+
+    {
+      "id": "D1",
+      "category": "transfers",
+      "title": "Potential international data transfer endpoints",
+      "description": "Heuristic check for endpoints likely hosted outside the local jurisdiction.",
+      "method": "Classify external domains (e.g. known US services, global CDNs) as potential cross-border transfer destinations.",
+      "weight": 10,
+      "legal_refs": ["GDPR Art.44-49", "KVKK Art.8-9"]
+    },
+    {
+      "id": "D2",
+      "category": "transfers",
+      "title": "Transfer information in policy (optional)",
+      "description": "Checks whether the privacy policy mentions data transfers or sharing.",
+      "method": "Search privacy policy text for terms like 'transfer', 'aktarım', 'yurtdışına', 'third parties', 'üçüncü kişiler'.",
+      "weight": 5,
+      "legal_refs": ["GDPR Art.13-14", "KVKK Art.10"]
+    },
+
+    {
+      "id": "R1",
+      "category": "rights",
+      "title": "Data subject rights description",
+      "description": "Checks if the privacy policy describes user rights (access, rectification, erasure, objection).",
+      "method": "Search policy text for phrases like 'right to access', 'request deletion', 'haklarınız', 'erişim hakkı', 'düzeltme', 'silme'.",
+      "weight": 10,
+      "legal_refs": ["GDPR Art.15-22", "KVKK Art.11"]
+    },
+    {
+      "id": "R2",
+      "category": "rights",
+      "title": "Contact / DPO information",
+      "description": "Checks if there is a contact method for privacy-related requests.",
+      "method": "Search for email addresses and keywords like 'data protection officer', 'DPO', 'kvkk', 'privacy contact', along with postal address where available.",
+      "weight": 10,
+      "legal_refs": ["GDPR Art.13-14", "GDPR Art.37-39", "KVKK Art.10-11"]
+    },
+    {
+      "id": "R3",
+      "category": "rights",
+      "title": "Controller identification",
+      "description": "Checks whether the privacy policy identifies the controller (company/organization).",
+      "method": "Search for legal entity names, phrases like 'data controller', 'veri sorumlusu', or company identification details.",
+      "weight": 10,
+      "legal_refs": ["GDPR Art.13(1)(a)", "KVKK Art.10"]
+    },
+
+    {
+      "id": "P1",
+      "category": "risk",
+      "title": "Profiling/behavioral advertising risk",
+      "description": "Assesses profiling risk based on number and type of trackers.",
+      "method": "Combine tracker count and categories (especially advertising and social trackers); if above threshold, mark as high profiling risk.",
+      "weight": 20,
+      "legal_refs": ["GDPR Art.22", "GDPR Art.35"]
+    },
+    {
+      "id": "P2",
+      "category": "risk",
+      "title": "Behavioural advertising indicators",
+      "description": "Detects common behavioural advertising providers.",
+      "method": "Specific check for domains like doubleclick.net, facebook.net, adnxs.com and similar ad-exchange services.",
+      "weight": 10,
+      "legal_refs": ["GDPR Art.22", "GDPR Art.35"]
+    },
+    {
+      "id": "P3",
+      "category": "risk",
+      "title": "Child-directed content heuristic",
+      "description": "Rough heuristic to detect sites possibly targeting children.",
+      "method": "Search page title/meta/body for keywords like 'children', 'kids', 'çocuk', 'oyuncak'; if combined with trackers, increase risk.",
+      "weight": 5,
+      "legal_refs": ["GDPR Art.8"]
+    }
+  ]
+}
