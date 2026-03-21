@@ -1,0 +1,33 @@
+{
+  "manifest_version": 2,
+  "name": "Web Privacy Compliance Checker",
+  "version": "0.7",
+  "description": "Analyzes pages for privacy indicators (cookies, trackers, HTTPS, policy link, forms).",
+  "icons": { "48": "icons/icon.png" },
+  "browser_action": {
+    "default_icon": "icons/icon.png",
+    "default_title": "Privacy Checker",
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "activeTab",
+    "cookies",
+    "storage",
+    "webRequest",
+    "tabs",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["detectors.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    "tracker_list.json"
+  ]
+}

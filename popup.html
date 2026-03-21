@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Privacy Checker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0b0c10;
+      --bg2:       #13151c;
+      --bg3:       #1c1f2a;
+      --border:    #252836;
+      --text:      #cdd3e0;
+      --muted:     #5a6175;
+      --pass:      #00e5a0;
+      --fail:      #ff4466;
+      --warn:      #ffb020;
+      --accent:    #4d9fff;
+      --grade-a:   #00e5a0;
+      --grade-b:   #6dffb3;
+      --grade-c:   #ffb020;
+      --grade-d:   #ff7a40;
+      --grade-f:   #ff4466;
+      --radius:    6px;
+      --mono:      'SF Mono', 'Cascadia Code', 'Fira Code', ui-monospace, monospace;
+      --sans:      'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+
+    html { 
+      font-size: 13px; 
+    }
+
+    body {
+      width: 460px;
+      max-height: 640px;
+      zoom: 1.25;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      scrollbar-width: thin;
+      scrollbar-color: var(--bg3) var(--bg);
+    }
+
+    body::-webkit-scrollbar { width: 4px; }
+    body::-webkit-scrollbar-track { background: var(--bg); }
+    body::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 2px; }
+
+    /* ── Header ── */
+    #header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    #header svg { flex-shrink: 0; opacity: 0.7; }
+
+    #site-info { flex: 1; min-width: 0; }
+
+    #site-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    #site-domain {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #https-badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      padding: 2px 7px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    #https-badge.secure   { background: rgba(0,229,160,0.12); color: var(--pass); border: 1px solid rgba(0,229,160,0.25); }
+    #https-badge.insecure { background: rgba(255,68,102,0.12); color: var(--fail); border: 1px solid rgba(255,68,102,0.25); }
+    #https-badge.unknown  { background: rgba(90,97,117,0.2);   color: var(--muted); border: 1px solid var(--border); }
+
+    /* ── Score hero ── */
+    #score-hero {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 20px 18px 16px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    #ring-wrap { position: relative; flex-shrink: 0; }
+
+    #ring-wrap svg { display: block; transform: rotate(-90deg); }
+
+    #ring-track { fill: none; stroke: var(--bg3); stroke-width: 5; }
+
+    #ring-fill {
+      fill: none;
+      stroke-width: 5;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1s cubic-bezier(0.4,0,0.2,1),
+                  stroke 0.4s ease;
+    }
+
+    #grade-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #grade-letter {
+      font-family: var(--mono);
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    #grade-score {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    #score-meta { flex: 1; }
+
+    #score-headline {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    #score-sub {
+      font-size: 11.5px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* Category summary pills */
+    #category-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 10px;
+    }
+
+    .cat-pill {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--muted);
+    }
+
+    .cat-pill .dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── Scan button ── */
+    #scan-wrap {
+      padding: 14px 14px 0;
+    }
+
+    #scanButton {
+      width: 100%;
+      padding: 9px 0;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, color 0.2s;
+    }
+
+    #scanButton:hover {
+      border-color: var(--accent);
+      background: rgba(77,159,255,0.07);
+      color: var(--accent);
+    }
+
+    #scanButton:active { opacity: 0.7; }
+    #scanButton:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Status / loading ── */
+    #status {
+      padding: 10px 14px 0;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      min-height: 22px;
+    }
+
+    .scanning-dot {
+      display: inline-block;
+      animation: blink 1s step-end infinite;
+    }
+    .scanning-dot:nth-child(2) { animation-delay: 0.15s; }
+    .scanning-dot:nth-child(3) { animation-delay: 0.30s; }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* ── Results panel ── */
+    #results { padding: 0 0 14px; display: none; }
+
+    /* ── Category sections ── */
+    .cat-section {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cat-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+
+    .cat-header:hover { background: rgba(255,255,255,0.02); }
+
+    .cat-icon {
+      font-size: 13px;
+      width: 18px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .cat-name {
+      flex: 1;
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+
+    .cat-bar-wrap {
+      width: 56px;
+      height: 4px;
+      background: var(--bg3);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .cat-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .cat-fraction {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      width: 28px;
+      text-align: right;
+    }
+
+    .cat-chevron {
+      color: var(--muted);
+      font-size: 10px;
+      transition: transform 0.2s;
+      margin-left: 4px;
+    }
+
+    .cat-section.open .cat-chevron { transform: rotate(180deg); }
+
+    /* Rule rows */
+    .cat-rules {
+      display: none;
+      padding: 0 14px 8px;
+    }
+
+    .cat-section.open .cat-rules { display: block; }
+
+    .rule-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 5px 0;
+      border-top: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .rule-row:first-child { border-top: none; }
+
+    .rule-status {
+      font-size: 11px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .rule-status.pass { color: var(--pass); }
+    .rule-status.fail { color: var(--fail); }
+    .rule-status.info { color: var(--muted); }
+    .rule-status.skip { color: var(--accent); opacity: 0.6; }
+
+    .rule-text { flex: 1; }
+
+    .rule-title {
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 1px;
+    }
+
+    .rule-detail {
+      font-size: 10.5px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .rule-id {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      color: var(--bg3);
+      background: var(--bg3);
+      padding: 1px 4px;
+      border-radius: 2px;
+      flex-shrink: 0;
+      margin-top: 2px;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    /* ── Tracker list ── */
+    #tracker-detail {
+      padding: 8px 14px 6px;
+      border-bottom: 1px solid var(--border);
+      display: none;
+    }
+
+    #tracker-detail.visible { display: block; }
+
+    .tracker-header {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .tracker-list {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .tracker-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    .tracker-name { flex: 1; color: var(--text); }
+
+    .tracker-cat {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      padding: 1px 5px;
+      border-radius: 2px;
+      border: 1px solid var(--border);
+    }
+
+    .tracker-cat.advertising { color: #ff7a40; border-color: rgba(255,122,64,0.3); background: rgba(255,122,64,0.07); }
+    .tracker-cat.social      { color: #a78bff; border-color: rgba(167,139,255,0.3); background: rgba(167,139,255,0.07); }
+    .tracker-cat.analytics   { color: var(--warn); border-color: rgba(255,176,32,0.3); background: rgba(255,176,32,0.07); }
+    .tracker-cat.fingerprinting { color: var(--fail); border-color: rgba(255,68,102,0.3); background: rgba(255,68,102,0.07); }
+    .tracker-cat.crm         { color: var(--accent); border-color: rgba(77,159,255,0.3); background: rgba(77,159,255,0.07); }
+    .tracker-cat.cmp         { color: var(--pass); border-color: rgba(0,229,160,0.3); background: rgba(0,229,160,0.07); }
+    .tracker-cat.cdn         { color: var(--muted); border-color: var(--border); background: var(--bg3); }
+    .tracker-cat.payment     { color: #6dffb3; border-color: rgba(109,255,179,0.3); background: rgba(109,255,179,0.07); }
+    .tracker-cat.utility     { color: var(--muted); border-color: var(--border); background: var(--bg3); }
+
+    .tracker-jur {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--muted);
+      background: var(--bg3);
+      padding: 1px 4px;
+      border-radius: 2px;
+    }
+
+    /* ── Error state ── */
+    #error-msg {
+      display: none;
+      padding: 10px 14px;
+      font-size: 11.5px;
+      color: var(--fail);
+      background: rgba(255,68,102,0.06);
+      border: 1px solid rgba(255,68,102,0.2);
+      margin: 10px 14px;
+      border-radius: var(--radius);
+    }
+
+    /* ── Initial placeholder ── */
+    #placeholder {
+      padding: 14px 14px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .ph-row {
+      height: 11px;
+      background: var(--bg3);
+      border-radius: 3px;
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div id="header">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="7" stroke="#5a6175" stroke-width="1.2"/>
+      <path d="M8 4v4l3 1.5" stroke="#5a6175" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    <div id="site-info">
+      <div id="site-title">Privacy Checker</div>
+      <div id="site-domain">—</div>
+    </div>
+    <div id="https-badge" class="unknown">—</div>
+  </div>
+
+  <!-- Score hero (hidden until scan) -->
+  <div id="score-hero" style="display:none">
+    <div id="ring-wrap">
+      <svg width="80" height="80" viewBox="0 0 80 80">
+        <circle class="ring-track" id="ring-track" cx="40" cy="40" r="34"/>
+        <circle id="ring-fill" cx="40" cy="40" r="34"/>
+      </svg>
+      <div id="grade-label">
+        <div id="grade-letter">—</div>
+        <div id="grade-score">—/100</div>
+      </div>
+    </div>
+    <div id="score-meta">
+      <div id="score-headline">—</div>
+      <div id="score-sub">—</div>
+      <div id="category-pills"></div>
+    </div>
+  </div>
+
+  <!-- Scan button -->
+  <div id="scan-wrap">
+    <button id="scanButton">⬡ &nbsp;Scan This Page</button>
+  </div>
+
+  <!-- Status line -->
+  <div id="status"></div>
+
+  <!-- Error -->
+  <div id="error-msg"></div>
+
+  <!-- Placeholder skeleton -->
+  <div id="placeholder">
+    <div class="ph-row" style="width:55%"></div>
+    <div class="ph-row" style="width:80%"></div>
+    <div class="ph-row" style="width:40%"></div>
+  </div>
+
+  <!-- Full results -->
+  <div id="results"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
