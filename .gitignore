@@ -1,0 +1,35 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build outputs
+dist/
+build/
+*.xpi
+*.crx
+
+# Firefox
+*.大火
+*.webapp
+
+# Temporary
+*.tmp
+*.temp
+.cache/
+/.claude
+/.claude-flow
+.mcp.json
+CLAUDE.md
